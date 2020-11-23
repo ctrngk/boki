@@ -1,0 +1,88 @@
+{
+  "kind": "collectionType",
+  "collectionName": "cards",
+  "info": {
+    "name": "card",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "front": {
+      "type": "json",
+      "required": true,
+      "default": {
+        "html": ""
+      }
+    },
+    "deck": {
+      "model": "deck",
+      "via": "cards"
+    },
+    "back": {
+      "type": "json",
+      "required": true,
+      "default": {
+        "html": ""
+      }
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "learning",
+        "learned",
+        "relearning"
+      ],
+      "default": "learning"
+    },
+    "steps_index": {
+      "type": "integer",
+      "default": 0,
+      "required": true
+    },
+    "ease_factor": {
+      "type": "decimal",
+      "default": 2.5
+    },
+    "interval": {
+      "type": "decimal"
+    },
+    "history": {
+      "type": "json",
+      "required": false
+    },
+    "accessStartTime": {
+      "type": "json"
+    },
+    "accessLeftTime": {
+      "type": "json"
+    },
+    "scheduleDueTime": {
+      "type": "json"
+    },
+    "description": {
+      "type": "json",
+      "required": false,
+      "default": {
+        "html": ""
+      }
+    },
+    "media": {
+      "collection": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ],
+      "plugin": "upload",
+      "required": false
+    },
+    "statusHistory": {
+      "type": "json"
+    }
+  }
+}

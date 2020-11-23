@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "settings",
+  "info": {
+    "name": "setting",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "audio_auto_play": {
+      "type": "boolean",
+      "default": true,
+      "required": true
+    },
+    "audio_auto_loop": {
+      "type": "boolean",
+      "default": true,
+      "required": true
+    },
+    "theme": {
+      "type": "enumeration",
+      "enum": [
+        "white",
+        "black"
+      ],
+      "default": "white"
+    }
+  }
+}
