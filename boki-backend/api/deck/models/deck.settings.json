@@ -25,7 +25,8 @@
     },
     "NEW_STEPS": {
       "type": "json",
-      "required": true
+      "required": true,
+      "default": [15, 1440, 8640]
     },
     "GRADUATING_INTERVAL": {
       "type": "integer",
@@ -68,7 +69,8 @@
     },
     "LAPSES_STEPS": {
       "type": "json",
-      "required": true
+      "required": true,
+      "default": [20]
     },
     "description": {
       "type": "string"

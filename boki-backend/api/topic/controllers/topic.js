@@ -40,27 +40,27 @@ module.exports = {
     console.log("DELETE controllers/topic.js called..")
     const {id} = ctx.params
     const topicID = id
-    console.log({topicID})
+    // console.log({topicID})
 
     const topic = await strapi.services.topic.findOne({id})
     const deckIDS = topic.decks.map(x => x.id)
-    console.log({deckIDS})
+    // console.log({deckIDS})
     const decks = await Promise.all(...[deckIDS.map(async deckID =>
       await strapi.services.deck.findOne({id: deckID}))])
     const cardIDS = decks.flatMap(deck => deck.cards.flatMap(x => x.id))
-    console.log({cardIDS})
+    // console.log({cardIDS})
     const mediaIDS = decks.flatMap(
       deck => deck.cards.flatMap(
         card => card.media.flatMap(
           media => media.id
         )))
-    console.log({mediaIDS})
+    // console.log({mediaIDS})
     const mediaFiles = await Promise.all(
       ...[mediaIDS.map(async mediaID =>
         await strapi.plugins['upload'].services.upload.fetch({id: mediaID})
       )]
     )
-    console.log({mediaFiles})
+    // console.log({mediaFiles})
 
     const asyncRes = await Promise.all(
       ...[
@@ -81,7 +81,7 @@ module.exports = {
         // strapi.services.topic.delete({id: topicID})
       ]
     )
-    console.log({asyncRes})
+    // console.log({asyncRes})
     const entity = await strapi.services.topic.delete({id: topicID})
     return sanitizeEntity(entity, {model: strapi.models.topic})
   },

@@ -155,6 +155,7 @@ function Page({data}) {
         <h1><Link href="/settings/1"><a>Global Settings</a></Link></h1>
         <h1><Link href="/learning"><a>Learning</a></Link></h1>
         <h1><Link href="/statistics"><a>Statistics</a></Link></h1>
+        <h1><Link href="/getShared"><a>Get shared</a></Link></h1>
 
 
     </>

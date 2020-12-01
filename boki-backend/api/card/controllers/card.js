@@ -14,17 +14,17 @@ module.exports = {
     console.log("DELETE controllers/card.js called..")
     const {id} = ctx.params
     const cardID = id
-    console.log({cardID})
+    // console.log({cardID})
     const card = await strapi.services.card.findOne({id: cardID})
-    console.log({card})
+    // console.log({card})
     const mediaIDS = card.media.flatMap(media => media.id)
-    console.log({mediaIDS})
+    // console.log({mediaIDS})
     const mediaFiles = await Promise.all(
       ...[mediaIDS.map(async mediaID =>
         await strapi.plugins['upload'].services.upload.fetch({id: mediaID})
       )]
     )
-    console.log({mediaFiles})
+    // console.log({mediaFiles})
 
     const asyncRes = await Promise.all(
       ...[
@@ -34,7 +34,7 @@ module.exports = {
         }),
       ]
     )
-    console.log({asyncRes})
+    // console.log({asyncRes})
     const entity = await strapi.services.card.delete({id: cardID})
     return sanitizeEntity(entity, {model: strapi.models.card})
   },

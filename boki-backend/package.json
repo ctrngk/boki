@@ -1,5 +1,5 @@
 {
-  "name": "my-project",
+  "name": "boki-backend",
   "private": true,
   "version": "0.1.0",
   "description": "A Strapi application",
@@ -9,10 +9,10 @@
     "build": "strapi build",
     "strapi": "strapi"
   },
-  "devDependencies": {},
   "dependencies": {
     "knex": "<0.20.0",
-    "sqlite3": "latest",
+    "pg": "^8.5.1",
+    "pg-connection-string": "^2.1.0",
     "strapi": "3.2.5",
     "strapi-admin": "3.2.5",
     "strapi-connector-bookshelf": "3.2.5",
@@ -28,7 +28,7 @@
     "name": "A Strapi developer"
   },
   "strapi": {
-    "uuid": "4a8d7595-bdcd-4fe8-a543-f7b53082c7cd"
+    "uuid": "7b277157-33ad-4ac6-be78-73ea3846cabf"
   },
   "engines": {
     "node": ">=10.0.0",

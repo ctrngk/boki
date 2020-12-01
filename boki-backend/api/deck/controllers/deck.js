@@ -13,25 +13,25 @@ module.exports = {
     console.log("DELETE controllers/deck.js called..")
     const {id} = ctx.params
     const deckID = id
-    console.log({deckID})
+    // console.log({deckID})
     const deck = await strapi.services.deck.findOne({id: deckID})
     const cardIDS = deck.cards.map(x => x.id)
-    console.log({cardIDS})
+    // console.log({cardIDS})
     const cards = await Promise.all(...[cardIDS.map(async cardID =>
       await strapi.services.card.findOne({id: cardID})
     )])
-    console.log({cards})
+    // console.log({cards})
     const mediaIDS = cards.flatMap(
       card => card.media.flatMap(
         media => media.id
       ))
-    console.log({mediaIDS})
+    // console.log({mediaIDS})
     const mediaFiles = await Promise.all(
       ...[mediaIDS.map(async mediaID =>
         await strapi.plugins['upload'].services.upload.fetch({id: mediaID})
       )]
     )
-    console.log({mediaFiles})
+    // console.log({mediaFiles})
 
 
 
@@ -48,7 +48,7 @@ module.exports = {
         }),
       ]
     )
-    console.log({asyncRes})
+    // console.log({asyncRes})
     const entity = await strapi.services.deck.delete({id: deckID})
     return sanitizeEntity(entity, {model: strapi.models.deck})
   },
