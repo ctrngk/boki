@@ -1,10 +1,6 @@
-import Link from "next/link";
-import Head from 'next/head';
-import React, {useState} from "react";
-import JSZip from 'jszip'
-import {zipObject} from "../../utils/zipObject"
-import {evalCard, evalDoubleCurly} from "../../utils/handleDoubleCurly"
-import axios from "axios"
+import axios from "axios";
+import {zipObject} from "./zipObject";
+import {evalCard, evalDoubleCurly} from "./handleDoubleCurly";
 
 const SERVER_BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
 
@@ -72,6 +68,7 @@ export async function clientImportAPKG(zipFiles) {
     // @ts-ignore
     const SQL = await window.initSqlJs({})
     // var db = new SQL.Database(new Uint8Array(zipFiles["sqlite3"]))
+    console.log({"sqlite3": zipFiles["sqlite3"]})
     var db = new SQL.Database(zipFiles["sqlite3"])
     let sqlModels = `SELECT models FROM col`
     let sql = `SELECT tags, flds, mid FROM notes`
@@ -79,7 +76,6 @@ export async function clientImportAPKG(zipFiles) {
     const models = JSON.parse(res[0].values[0][0])
     const results = await db.exec(sql)
     const rows = results[0].values
-    let promises = []
     for (const row of rows) {
         const tags = row[0]
         const content = row[1]
@@ -139,69 +135,6 @@ export async function clientImportAPKG(zipFiles) {
             description: {"html": tags},
             deck: deckID
         }
-        promises.push(axios.post(`${SERVER_BASE_URL}/cards`, newCard))
+        await axios.post(`${SERVER_BASE_URL}/cards`, newCard)
     }
-    Promise.all(promises).then(function (data) {
-        console.log("success")
-    })
 }
-
-const App = () => {
-    const [content, setContent] = useState([])
-    const [mediaContent, setMediaContent] = useState("")
-
-    const handleChangeFile = (file) => {
-        const deckName = file.name
-        let zip = new JSZip()
-        zip.loadAsync(file /* = file blob */)
-            .then(function (zip) {
-                // process ZIP file content here
-                const {files} = zip
-                const names = Object.keys(files)
-                    .map(key => files[key].name)
-                    .filter(name => name !== "media")
-                    .filter(name => name !== "collection.anki2")
-
-                const promises = []
-
-                names.forEach(name => {
-                    promises.push(zip.file(name).async("base64"))
-                })
-                promises.push(zip.file("media").async("string"))
-                promises.push(zip.file("collection.anki2").async("uint8array"))
-                let zipFiles = {}
-                Promise.all(promises).then(function (data) {
-                    let keys = Object.keys(data)
-                    zipFiles["sqlite3"] = data[keys.pop()]
-                    zipFiles["media"] = data[keys.pop()]
-                    while (keys.length > 0) {
-                        const key = keys.pop()
-                        zipFiles[key] = data[key]
-                    }
-                    zipFiles["deckName"] = deckName
-                    clientImportAPKG(zipFiles)
-                })
-
-            }, function () {
-                alert("Not a valid zip file")
-            })
-    }
-
-    return (
-        <>
-            <Head>
-                <script type="text/javascript" src="/sql-asm.js"/>
-                <title>GetShared</title>
-            </Head>
-            <Link href="/"><a>HOME</a></Link>
-            <h1>get Anki shared</h1>
-            <div>
-                <input type="file" onChange={e =>
-                    handleChangeFile(e.target.files[0])}/>
-            </div>
-        </>
-    )
-
-}
-
-export default App

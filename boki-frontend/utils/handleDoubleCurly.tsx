@@ -1,5 +1,5 @@
-const jsdom = require("jsdom");
-const { JSDOM } = jsdom
+// const jsdom = require("jsdom");
+// const { JSDOM } = jsdom
 
 // https://gist.github.com/Paradoxis/14997049256dd01c5b36fc11a06fe9cf
 // Find and replace double curly braces in JavaScript, example:
@@ -70,8 +70,11 @@ export function evalCard(state = "front", original: string, keyValueObject: { [k
             let r: string = rest.join('::')
             // r => "60s", "<b><i>40s::hints</i></b>", "50s::h"
             if (r.includes("::")) {
-                const dom = new JSDOM(r) // <b><i><b>40s</b>::hints</i></b>
-                const text = dom.window.document.body.textContent // 40s::hints
+                const elem = document.createElement("div")
+                elem.innerHTML = r
+                const text = elem.textContent
+                // const dom = new JSDOM(r) // <b><i><b>40s</b>::hints</i></b>
+                // const text = dom.window.document.body.textContent // 40s::hints
                 const toBeRemoved = text.split("::")[0]
                 r = r.replace(toBeRemoved, "") // <b><i>hints</i></b>
                 r = r.replace("::", "")
@@ -103,8 +106,11 @@ export function evalCard(state = "front", original: string, keyValueObject: { [k
             let r: string = rest.join('::')
             // r => "60s", "<b><i>40s::hints</i></b>", "50s::h"
             if (r.includes("::")) {
-                const dom = new JSDOM(r) // <b><i>40s::hints</i></b>
-                const text = dom.window.document.body.textContent // 40s::hints
+                const elem = document.createElement("div")
+                elem.innerHTML = r
+                const text = elem.textContent
+                // const dom = new JSDOM(r) // <b><i>40s::hints</i></b>
+                // const text = dom.window.document.body.textContent // 40s::hints
                 const toBeRemoved = text.split("::")[1] // hints
                 r = r.replace(toBeRemoved, "") // <b><i>40s::</i></b>
                 r = r.replace("::", "")
