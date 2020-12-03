@@ -4,6 +4,7 @@ import axios from "axios";
 import Editor from '../../../components/Editor'
 import stripHTML from "../../../utils/stripHTML";
 import ComplexTable from '../../../components/ComplexTable'
+import {swapB64Upload, dummyCardCreated} from "../../../utils/swapB64Upload";
 
 const SERVER_BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
 
@@ -54,19 +55,27 @@ function Page(dataProps) {
 
     // CRUD operations
     const addItem = async () => {
-        const data1 = window.editor1.getData()
-        const data2 = window.editor2.getData()
-        const data3 = window.editor3.getData() // optional description
+
+        let data1 = window.editor1.getData()
+        let data2 = window.editor2.getData()
+        let data3 = window.editor3.getData() // optional description
         if (!data1 || !data2)
             return
+        const cardID = await dummyCardCreated(deckID)
+        data1 = await swapB64Upload(data1, cardID)
+        data2 = await swapB64Upload(data2, cardID)
+        data3 = await swapB64Upload(data3, cardID)
+
+
         const newData = {
             "front": {"html": data1},
             "back": {"html": data2},
             "deck": {"id": deckID},
             "description": {"html": data3}
         }
-        const res = await axios.post(
-            `${SERVER_BASE_URL}/cards`,
+        // use PUT instead of POST cos we have created dummy cardID
+        const res = await axios.put(
+            `${SERVER_BASE_URL}/cards/${cardID}`,
             newData
         )
         window.location.reload(false)
@@ -80,11 +89,15 @@ function Page(dataProps) {
     }
 
     const updateItem = async (id) => {
-        const data1 = window.editor1.getData()
-        const data2 = window.editor2.getData()
-        const data3 = window.editor3.getData()
-        if (!data1 || !data2)
-            return
+        const cardID = id
+        let data1 = window.editor1.getData()
+        let data2 = window.editor2.getData()
+        let data3 = window.editor3.getData()
+        if (!data1 || !data2) return
+        data1 = await swapB64Upload(data1, cardID)
+        data2 = await swapB64Upload(data2, cardID)
+        data3 = await swapB64Upload(data3, cardID)
+
         const newData = {
             "front": {"html": data1},
             "back": {"html": data2},

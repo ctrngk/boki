@@ -4,6 +4,7 @@ import Editor from "../../../../components/Editor";
 import axios from "axios";
 import formatBytes from "../../../../utils/displaySize";
 import stripHTML from "../../../../utils/stripHTML";
+import {swapB64Upload} from "../../../../utils/swapB64Upload";
 
 const SERVER_BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
 
@@ -65,11 +66,17 @@ function Page(dataProps) {
     const [loading, setLoading] = useState(false)
 
     const updateItem = async () => {
-        const data1 = window.editor1.getData()
-        const data2 = window.editor2.getData()
-        const data3 = window.editor3.getData() // optional description
+        let data1 = window.editor1.getData()
+        let data2 = window.editor2.getData()
+        let data3 = window.editor3.getData() // optional description
+
         if (!data1 || !data2)
             return
+
+        data1 = await swapB64Upload(data1)
+        data2 = await swapB64Upload(data2)
+        data3 = await swapB64Upload(data3)
+
         setEditing(false)
         setLoading(true)
         const newData = {
@@ -94,7 +101,7 @@ function Page(dataProps) {
         window.location.href= '/'
     }
 
-    // ********* upload files***********
+    // ********* upload audio files***********
     const [selectedFiles, setSelectedFiles] = useState([])
 
     const onFileChange = e => {
@@ -215,7 +222,7 @@ function Page(dataProps) {
             })}
 
 
-            <h1>Upload Resources</h1>
+            <h1>Upload Audio Resources</h1>
             <input type="file" onChange={onFileChange} multiple />
             <button onClick={onFileUpload}>Upload!</button>
             {selectedFiles && <>

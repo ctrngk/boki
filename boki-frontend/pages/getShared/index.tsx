@@ -5,6 +5,9 @@ import JSZip from 'jszip'
 import {zipObject} from "../../utils/zipObject"
 import {evalCard, evalDoubleCurly} from "../../utils/handleDoubleCurly"
 import axios from "axios"
+import {dummyCardCreated, swapB64Upload} from "../../utils/swapB64Upload";
+import {string} from "prop-types";
+import pProps from 'p-props'
 
 const SERVER_BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
 
@@ -54,16 +57,46 @@ function clientReplaceSrcWithBase64(html, src2Base64Dict) {
     return elem.innerHTML
 }
 
+async function updateSrc(html: string, fileName_blob: object, cardID: string) {
+    const elem = document.createElement("div")
+    elem.innerHTML = html
+    // https://stackoverflow.com/a/30547087/6710360
+    // get all the src
+    var srcNodeList = elem.querySelectorAll('[src]')
+    for (let tag of srcNodeList) {
+        if (tag.tagName.toLowerCase() !== "script" && tag.getAttribute('src')) {
+            let src = tag.getAttribute('src')
+            if (src.startsWith("http")) {
+                const segments = new URL(src).pathname.split('/');
+                src = segments.pop() || segments.pop(); // Handle potential trailing slash
+            }
+            // console.log({src})
+            const blob = fileName_blob[src]
+            // console.log({blob})
+            const formData = new FormData()
+            formData.append("files", blob, src)
+            formData.append('ref', 'card')
+            formData.append('refId', cardID)
+            formData.append('field', 'media') // media field in card model
+            // appending to this card id's media []
+            const uploadedInfo = await axios.post(`${SERVER_BASE_URL}/upload/`, formData)
+            const {url} = uploadedInfo.data[0]
+            // console.log({url})
+            tag.setAttribute('src', `${SERVER_BASE_URL}${url}`)
+        }
+    }
+    return elem.innerHTML
+}
+
 
 export async function clientImportAPKG(zipFiles) {
 
-    const media = zipFiles.media
     const mediaObj = JSON.parse(zipFiles.media) // {0: *.jpg}
-    let src2Base64Dict = {}
+    let fileName_blob = {}
     for (const number of Object.keys(mediaObj)) {
-        const src = mediaObj[number]
-        const base64: string = zipFiles[number]
-        src2Base64Dict[src] = base64
+        const fileName = mediaObj[number]
+        const blob = zipFiles[number]
+        fileName_blob[fileName] = blob
     }
 
     const deckName = zipFiles.deckName
@@ -130,16 +163,22 @@ export async function clientImportAPKG(zipFiles) {
             back = evalDoubleCurly(back, {"FrontSide": ""})
         }
 
-        front = clientReplaceSrcWithBase64(front, src2Base64Dict)
-        back = clientReplaceSrcWithBase64(back, src2Base64Dict)
+        const cardID = await dummyCardCreated(deckID)
+        // console.log({cardID})
+        // before: <div>hello <img src="hello.jpg" /> world </div>
+        // after: <div> hello <img src="CMS://uploads/hello_xxx.jpg" /> world</div>
+        // console.log("before front", {front})
+        front = await updateSrc(front, fileName_blob, cardID)
+        // console.log("after front", {front})
+        back = await updateSrc(back, fileName_blob, cardID)
 
-        const newCard = {
+        const newData = {
             front: {"html": front},
             back: {"html": back},
             description: {"html": tags},
             deck: deckID
         }
-        promises.push(axios.post(`${SERVER_BASE_URL}/cards`, newCard))
+        promises.push(axios.put(`${SERVER_BASE_URL}/cards/${cardID}`, newData))
     }
     Promise.all(promises).then(function (data) {
         console.log("success")
@@ -152,39 +191,41 @@ const App = () => {
 
     const handleChangeFile = (file) => {
         const deckName = file.name
-        let zip = new JSZip()
-        zip.loadAsync(file /* = file blob */)
-            .then(function (zip) {
-                // process ZIP file content here
-                const {files} = zip
-                const names = Object.keys(files)
-                    .map(key => files[key].name)
-                    .filter(name => name !== "media")
-                    .filter(name => name !== "collection.anki2")
-
-                const promises = []
-
-                names.forEach(name => {
-                    promises.push(zip.file(name).async("base64"))
-                })
-                promises.push(zip.file("media").async("string"))
-                promises.push(zip.file("collection.anki2").async("uint8array"))
-                let zipFiles = {}
-                Promise.all(promises).then(function (data) {
-                    let keys = Object.keys(data)
-                    zipFiles["sqlite3"] = data[keys.pop()]
-                    zipFiles["media"] = data[keys.pop()]
-                    while (keys.length > 0) {
-                        const key = keys.pop()
-                        zipFiles[key] = data[key]
-                    }
-                    zipFiles["deckName"] = deckName
-                    clientImportAPKG(zipFiles)
-                })
-
-            }, function () {
-                alert("Not a valid zip file")
+        let jszip = new JSZip()
+        jszip.loadAsync(file /* = file blob */).then(zip => {
+            // process ZIP file content here
+            const {files} = zip
+            const names = Object.keys(files)
+                .map(key => files[key].name)
+                .filter(name => name !== "media")
+                .filter(name => name !== "collection.anki2")
+            let promises = {}
+            names.map(name => {
+                promises[name] = zip.file(name).async("blob")
             })
+            promises["media"] = zip.file("media").async("string")
+            promises["sqlite3"] = zip.file("collection.anki2").async("uint8array")
+            // https://stackoverflow.com/a/61530774/6710360
+            pProps(promises).then(zipFiles => {
+                console.log({zipFiles})
+                zipFiles["deckName"] = deckName
+                clientImportAPKG(zipFiles)
+            })
+            // TODO
+            // M.marinum - __[hint:]hand infection}} in aquarium workers
+            // M.scrofulaceum - {{c1cervical lymphadenitis__ in kids
+            // TODO
+            // slow uploading
+            // TODO
+            // table problem pause every time when using console.log
+            // TODO
+            // slow learning for every next card
+            // TODO critical
+            // refresh giving a new card. How to calculate access time?
+
+        }, (err) => {
+            alert("Not a valid zip file")
+        })
     }
 
     return (

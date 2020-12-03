@@ -58,8 +58,8 @@ const Page = ({data}) => {
             </tr>
             </thead>
             <tbody>
-            {data.map(x => <>
-                    <tr>
+            {data.map((x,index) => <>
+                    <tr key={index}>
                         <td>{x.id}</td>
                         <td>{x.title}</td>
                         <td>{x.dueCardCount}</td>
