@@ -1,9 +1,9 @@
 import React, {useReducer, useState, useRef} from 'react'
-import styled from "styled-components";
+import styled from '@emotion/styled'
 import Link from "next/link";
 import axios from "axios";
 
-const TableStyles = styled.div`
+const TableStyles = styled("div")`
   padding: 1rem;
 
   table {

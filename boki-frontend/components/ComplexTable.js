@@ -1,5 +1,6 @@
 import React from 'react'
-import styled from 'styled-components'
+import styled from '@emotion/styled'
+
 import {useTable, usePagination, useSortBy} from 'react-table'
 
 const TableStyles = styled.div`
@@ -87,7 +88,7 @@ function Table({columns, data}) {
                                         ? column.isSortedDesc
                                             ? ' 🔽'
                                             : ' 🔼'
-                                        : '↕️'}
+                                        : ' ↕️'}
                                 </span>
                             </th>
                         ))}

@@ -2,6 +2,8 @@ import React, {useContext, useEffect, useState} from "react";
 import SimpleBreadcrumbs from '../../components/SimpleBreadcurmbs'
 import axios from 'axios'
 import Link from "next/link"
+import styled from "@emotion/styled";
+import {EllipsisDiv} from "../../components/customStyles";
 
 const SERVER_BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
 
@@ -80,7 +82,10 @@ function Page(dataProps) {
         window.location.reload(false)
     }
 
-    const deleteItem = async id => {
+    const deleteItem = async (id, e) => {
+        e.preventDefault()
+        e.target.disabled = true
+        e.target.innerText = "DELETING"
         setEditing(false)
         const res = await axios.delete(
             `${SERVER_BASE_URL}/decks/${id}`
@@ -134,60 +139,58 @@ function Page(dataProps) {
     return <>
         <CustomBreadcrumbs dataProps={dataProps}/>
         <main>
-            <h2>
-                View Decks
-            </h2>
-            {/*<pre><code>*/}
-            {/*    {JSON.stringify(items, null, 8)}*/}
-            {/*</code></pre>*/}
-            <table>
-                <tbody>
-                <th>
-                    <tr>Deck</tr>
-                    <tr>description</tr>
-                    <tr>EASY_BONUS</tr>
-                    <tr>INTERVAL_MODIFIER</tr>
-                    <tr>MAXIMUM_INTERVAL</tr>
-                    <tr>MINIMUM_INTERVALL</tr>
-                    <tr>NEW_INTERVAL</tr>
-                    <tr>GRADUATING_INTERVAL</tr>
-                    <tr>EASY_INTERVAL</tr>
-                    <tr>STARTING_EASE</tr>
-                    <tr>NEW_STEPS</tr>
-                    <tr>LAPSES_STEPS</tr>
-                    <tr>Actions</tr>
-                </th>
+            <h2> View Decks </h2>
+            <div style={{
+                display: "flex",
+            }}>
+                <div>
+                    <div>Deck</div>
+                    <div>description</div>
+                    <div>EASY_BONUS</div>
+                    <div>INTERVAL_MODIFIER</div>
+                    <div>MAXIMUM_INTERVAL</div>
+                    <div>MINIMUM_INTERVALL</div>
+                    <div>NEW_INTERVAL</div>
+                    <div>GRADUATING_INTERVAL</div>
+                    <div>EASY_INTERVAL</div>
+                    <div>STARTING_EASE</div>
+                    <div>NEW_STEPS</div>
+                    <div>LAPSES_STEPS</div>
+                    <div>Actions</div>
+                </div>
                 {items.length > 0
                     ? items.map(item => (
-                        <td key={item.id}>
-                            <tr><Link href={`/topic/deck/${item.id}`}><a>{item.title}</a></Link></tr>
-                            <tr>{item.description || "null"}</tr>
-                            <tr>{item.EASY_BONUS}</tr>
-                            <tr>{item.INTERVAL_MODIFIER}</tr>
-                            <tr>{item.MAXIMUM_INTERVAL}</tr>
-                            <tr>{item.MINIMUM_INTERVAL}</tr>
-                            <tr>{item.NEW_INTERVAL}</tr>
-                            <tr>{item.GRADUATING_INTERVAL}</tr>
-                            <tr>{item.EASY_INTERVAL}</tr>
-                            <tr>{item.STARTING_EASE}</tr>
-                            <tr>{JSON.stringify(item.NEW_STEPS)}</tr>
-                            <tr>{JSON.stringify(item.LAPSES_STEPS)}</tr>
-                            <tr>
-                                <button onClick={() => editRow(item)}>
-                                    Edit
+                        <div key={item.id}>
+                            <EllipsisDiv>
+                                <Link href={`/topic/deck/${item.id}`}>
+                                    <a>{item.title}</a>
+                                </Link>
+                            </EllipsisDiv>
+                            <div>{item.description || "null"}</div>
+                            <div>{item.EASY_BONUS}</div>
+                            <div>{item.INTERVAL_MODIFIER}</div>
+                            <div>{item.MAXIMUM_INTERVAL}</div>
+                            <div>{item.MINIMUM_INTERVAL}</div>
+                            <div>{item.NEW_INTERVAL}</div>
+                            <div>{item.GRADUATING_INTERVAL}</div>
+                            <div>{item.EASY_INTERVAL}</div>
+                            <div>{item.STARTING_EASE}</div>
+                            <div>{JSON.stringify(item.NEW_STEPS)}</div>
+                            <div>{JSON.stringify(item.LAPSES_STEPS)}</div>
+                            <div>
+                                <button onClick={() => editRow(item)}> Edit</button>
+                                <button
+                                    onClick={(e) => deleteItem(item.id, e)}
+                                > Delete
                                 </button>
-                                <button onClick={() => deleteItem(item.id)}>
-                                    Delete
-                                </button>
-                            </tr>
-                        </td>
+                            </div>
+                        </div>
                     ))
                     : <td>
-                        <tr><h1>No items</h1></tr>
+                        <tr>No items</tr>
                     </td>
                 }
-                </tbody>
-            </table>
+            </div>
         </main>
 
         <>

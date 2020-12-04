@@ -24,7 +24,7 @@ export async function getServerSideProps(context) {
     }
 
     // **************alg part**********
-    console.log("*********alg part started*********")
+    // console.log("*********alg part started*********")
     // {id: 1, accessLeftTime: [""], scheduleDueTime: [time: "", countbyday: false]}
     // {id: 1, accessLeftTime: [""], scheduleDueTime: [time: "", countbyday: true]}
     // {id: 1, accessLeftTime: [""], scheduleDueTime: [time: "", countbyday: false]}
@@ -34,7 +34,7 @@ export async function getServerSideProps(context) {
     const firstNewCard = cards.find(x => x.history === null)
 
     if (readyCards.length > 0) {
-        console.log("visiting due card")
+        // console.log("visiting due card")
         let firstDueCard = readyCards[0]
         const deckData = await getDeckData(deckID)
         const cardData = await getCardData(firstDueCard.id)
@@ -47,13 +47,20 @@ export async function getServerSideProps(context) {
             // set visit time stamp
             card.accessStartTime.push(new Date().toJSON())
             const API = `${SERVER_BASE_URL}/cards/${firstDueCard.id}`
-            const { accessStartTime } = card
-            const response = await axios.put(API, { accessStartTime })
+            const {accessStartTime} = card
+            const response = await axios.put(API, {accessStartTime})
+        } else if (card.accessStartTime.length === card.history.length + 1) {
+            // revisit: update the final visit time stamp
+            card.accessStartTime[card.accessStartTime.length - 1] = (new Date().toJSON())
+            const API = `${SERVER_BASE_URL}/cards/${firstNewCard.id}`
+            const {accessStartTime} = card
+            const response = await axios.put(API, {accessStartTime})
+
         }
         const data = {deckID, cardID: firstDueCard.id, stagedCard: firstDueCard, prompt}
         return {props: {data}}
     } else if (firstNewCard) {
-        console.log(`visiting new card with ID ${firstNewCard.id}`)
+        // console.log(`visiting new card with ID ${firstNewCard.id}`)
         const deckData = await getDeckData(deckID)
         const cardData = await getCardData(firstNewCard.id)
         const card = new Card(deckData, cardData)
@@ -62,8 +69,15 @@ export async function getServerSideProps(context) {
             // set visit time stamp
             card.accessStartTime.push(new Date().toJSON())
             const API = `${SERVER_BASE_URL}/cards/${firstNewCard.id}`
-            const { accessStartTime } = card
-            const response = await axios.put(API, { accessStartTime })
+            const {accessStartTime} = card
+            const response = await axios.put(API, {accessStartTime})
+        } else if (card.accessStartTime.length === card.history.length + 1) {
+            // revisit: update the final visit time stamp
+            card.accessStartTime[card.accessStartTime.length - 1] = (new Date().toJSON())
+            const API = `${SERVER_BASE_URL}/cards/${firstNewCard.id}`
+            const {accessStartTime} = card
+            const response = await axios.put(API, {accessStartTime})
+
         }
 
 
@@ -87,13 +101,12 @@ export async function getServerSideProps(context) {
             else
                 return {id: x.id, due: next_card_min_dif + "mins"}
         })
-        let data = { deckID, cardID: null, stagedCard: null, dueInfo: dueCard, prompt: null }
+        let data = {deckID, cardID: null, stagedCard: null, dueInfo: dueCard, prompt: null}
         return {props: {data}} //show overview
     }
 }
 
 const Page = ({data}) => {
-    console.log({data})
     const [showBack, setShowBack] = useState(false)
 
     const {cardID, deckID, stagedCard, prompt} = data
@@ -120,14 +133,8 @@ const Page = ({data}) => {
 
     const columns = useMemo(
         () => [
-            {
-                Header: 'id',
-                accessor: 'id'
-            },
-            {
-                Header: 'due',
-                accessor: 'due'
-            },
+            { Header: 'id', accessor: 'id' },
+            { Header: 'due', accessor: 'due' },
         ]
     )
 
@@ -136,14 +143,11 @@ const Page = ({data}) => {
 
     return (<>
         <Link href="/learning"><a>Learning Center</a></Link>
-        {stagedCard?.media.length > 0 && <CustomAudio audios={stagedCard?.media.map(x => {
+        {stagedCard?.media.length > 0
+        && stagedCard?.media.some(x => { return x.mime?.split("/")[0] === "audio"})
+            && <CustomAudio audios={stagedCard?.media.map(x => {
             return x.mime?.split("/")[0] === "audio" && `${SERVER_BASE_URL}${x.url}`
         })}/>}
-        {/*<code>*/}
-        {/*    <pre>*/}
-        {/*    {JSON.stringify(stagedCard, null, 8)}*/}
-        {/*    </pre>*/}
-        {/*</code>*/}
         {stagedCard &&
         <>
             <div className="content" dangerouslySetInnerHTML={{__html: stagedCard.front.html}}/>

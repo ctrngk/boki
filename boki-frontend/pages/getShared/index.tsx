@@ -6,7 +6,6 @@ import {zipObject} from "../../utils/zipObject"
 import {evalCard, evalDoubleCurly} from "../../utils/handleDoubleCurly"
 import axios from "axios"
 import {dummyCardCreated, swapB64Upload} from "../../utils/swapB64Upload";
-import {string} from "prop-types";
 import pProps from 'p-props'
 
 const SERVER_BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
@@ -37,24 +36,6 @@ async function createTopicDeck(deckName) {
         deckID = Number(deck[0].id)
     }
     return deckID
-}
-
-function clientReplaceSrcWithBase64(html, src2Base64Dict) {
-    const elem = document.createElement("div")
-    elem.innerHTML = html
-    let elements = elem.querySelectorAll("img")
-    for (let i = 0; i < elements.length; i++) {
-        if (elements[i].src) {
-            let src = elements[i].src
-            if (src.startsWith("http")) {
-                const segments = new URL(src).pathname.split('/');
-                src = segments.pop() || segments.pop(); // Handle potential trailing slash
-            }
-            const base64content = src2Base64Dict[src]
-            elements[i].src = `data:image/jpeg;base64,${base64content}`
-        }
-    }
-    return elem.innerHTML
 }
 
 async function updateSrc(html: string, fileName_blob: object, cardID: string) {
@@ -185,11 +166,12 @@ export async function clientImportAPKG(zipFiles) {
     })
 }
 
-const App = () => {
-    const [content, setContent] = useState([])
-    const [mediaContent, setMediaContent] = useState("")
+const Page = () => {
+
+    const [loading, setLoading ] = useState(false)
 
     const handleChangeFile = (file) => {
+        setLoading(true)
         const deckName = file.name
         let jszip = new JSZip()
         jszip.loadAsync(file /* = file blob */).then(zip => {
@@ -207,21 +189,12 @@ const App = () => {
             promises["sqlite3"] = zip.file("collection.anki2").async("uint8array")
             // https://stackoverflow.com/a/61530774/6710360
             pProps(promises).then(zipFiles => {
-                console.log({zipFiles})
+                // console.log({zipFiles})
                 zipFiles["deckName"] = deckName
-                clientImportAPKG(zipFiles)
+                clientImportAPKG(zipFiles).then(res=> {
+                    setLoading(false)
+                })
             })
-            // TODO
-            // M.marinum - __[hint:]hand infection}} in aquarium workers
-            // M.scrofulaceum - {{c1cervical lymphadenitis__ in kids
-            // TODO
-            // slow uploading
-            // TODO
-            // table problem pause every time when using console.log
-            // TODO
-            // slow learning for every next card
-            // TODO critical
-            // refresh giving a new card. How to calculate access time?
 
         }, (err) => {
             alert("Not a valid zip file")
@@ -238,11 +211,13 @@ const App = () => {
             <h1>get Anki shared</h1>
             <div>
                 <input type="file" onChange={e =>
-                    handleChangeFile(e.target.files[0])}/>
+                    handleChangeFile(e.target.files[0])}
+                       disabled={loading}
+                />
             </div>
         </>
     )
 
 }
 
-export default App
+export default Page

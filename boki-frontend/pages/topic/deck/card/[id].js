@@ -92,9 +92,11 @@ function Page(dataProps) {
         window.location.reload(false)
 
     }
-    const handleDelete = async () => {
+    const handleDelete = async (e) => {
+        e.preventDefault()
+        e.target.innerText = "DELETING"
+        e.target.disabled = true
         setEditing(false)
-        setLoading(true)
         const res = await axios.delete(
             `${SERVER_BASE_URL}/cards/${cardID}`
         )
@@ -158,7 +160,7 @@ function Page(dataProps) {
                     {loading && "loading.."}
                 </>
             }
-            <button onClick={handleDelete}>DELETE</button>
+            <button onClick={e => handleDelete(e)}>DELETE</button>
 
             <br/>
             <Editor front={front_card} back={back_card} description={description} editing={editing}/>

@@ -1,13 +1,6 @@
 import React, {useEffect, useState} from "react";
-import styled from 'styled-components'
+import styled from '@emotion/styled'
 import Link from "next/link";
-
-const ExpandableStyles = styled.span`
-    .expandable:hover {
-        background-color: #e6e6ff;
-        cursor: pointer;
-    }
-`
 
 
 function SimpleBreadcrumbs({crumbs = [{"href": "", "text": ""}]}) {
@@ -26,13 +19,7 @@ function SimpleBreadcrumbs({crumbs = [{"href": "", "text": ""}]}) {
                              maxWidth: 300,
                          }}
                     >
-                        <Link
-                            key={index}
-                            href={x.href}
-                        >
-                            <a>{x.text}</a>
-                        </Link>
-                        {` / `}
+                        <a href={x.href}>{x.text}</a> {' / '}
                     </div>
             )
             }

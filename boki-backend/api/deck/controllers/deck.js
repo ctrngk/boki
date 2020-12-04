@@ -14,27 +14,19 @@ module.exports = {
     const {id} = ctx.params
     const deckID = id
     // console.log({deckID})
+
     const deck = await strapi.services.deck.findOne({id: deckID})
     const cardIDS = deck.cards.map(x => x.id)
-    // console.log({cardIDS})
-    const cards = await Promise.all(...[cardIDS.map(async cardID =>
-      await strapi.services.card.findOne({id: cardID})
-    )])
-    // console.log({cards})
-    const mediaIDS = cards.flatMap(
-      card => card.media.flatMap(
-        media => media.id
-      ))
-    // console.log({mediaIDS})
+
+    const mediaIDS = deck.cards
+      .flatMap(x => x.media)
+      .flatMap(media => media.id)
+
     const mediaFiles = await Promise.all(
       ...[mediaIDS.map(async mediaID =>
         await strapi.plugins['upload'].services.upload.fetch({id: mediaID})
       )]
     )
-    // console.log({mediaFiles})
-
-
-
     const asyncRes = await Promise.all(
       ...[
         // delete all the related media files
@@ -48,8 +40,8 @@ module.exports = {
         }),
       ]
     )
-    // console.log({asyncRes})
     const entity = await strapi.services.deck.delete({id: deckID})
+
     return sanitizeEntity(entity, {model: strapi.models.deck})
   },
 }

@@ -1,10 +1,10 @@
 import React, {useState, useEffect, useRef, useMemo} from 'react'
 import SimpleBreadcrumbs from '../../../components/SimpleBreadcurmbs'
-import axios from "axios";
+import axios from "axios"
 import Editor from '../../../components/Editor'
-import stripHTML from "../../../utils/stripHTML";
+import stripHTML from "../../../utils/stripHTML"
 import ComplexTable from '../../../components/ComplexTable'
-import {swapB64Upload, dummyCardCreated} from "../../../utils/swapB64Upload";
+import {swapB64Upload, dummyCardCreated} from "../../../utils/swapB64Upload"
 
 const SERVER_BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
 
@@ -129,39 +129,21 @@ function Page(dataProps) {
     }
     const handleClickDelete = async (cell, e) => {
         e.preventDefault()
+        e.target.innerText = "DELETING"
+        e.target.disabled = true
         const {id} = cell.row.original
         await deleteItem(id)
     }
 
     const columns = useMemo(
         () => [
-            {
-                Header: 'id',
-                accessor: 'id'
-            },
-            {
-                Header: 'front',
-                accessor: 'front'
-            },
-            {
-                Header: 'back',
-                accessor: 'back'
-            },
-            {
-                Header: 'description',
-                accessor: 'description'
-            },
-            {
-                Header: 'created_at',
-                accessor: 'created_at'
-            },
-            {
-                Header: 'updated_at',
-                accessor: 'updated_at'
-            },
-            {
-                Header: "Actions",
-                accessor: "Actions",
+            { Header: 'id', accessor: 'id' },
+            { Header: 'front', accessor: 'front' },
+            { Header: 'back', accessor: 'back' },
+            { Header: 'description', accessor: 'description' },
+            { Header: 'created_at', accessor: 'created_at' },
+            { Header: 'updated_at', accessor: 'updated_at' },
+            { Header: "Actions", accessor: "Actions",
                 Cell: ({cell}) => (
                     <>
                         <button onClick={(e) => handleClickEdit(cell, e)}>

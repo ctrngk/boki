@@ -50,7 +50,10 @@ function Page({data}) {
         window.location.reload(false)
     }
 
-    const deleteItem = async id => {
+    const deleteItem = async (id, e) => {
+        e.preventDefault()
+        e.target.disabled = true
+        e.target.innerText = "DELETING"
         setEditing(false)
         const res = await axios.delete(
             `${SERVER_BASE_URL}/topics/${id}`
@@ -80,9 +83,7 @@ function Page({data}) {
             {"href": "/", "text": "home"}
         ]}/>
         <main>
-            <h2>
-                View Topics
-            </h2>
+            <h2> View Topics </h2>
             <table>
                 <thead>
                 <tr>
@@ -92,16 +93,14 @@ function Page({data}) {
                 </thead>
                 <tbody>
                 {items.length > 0
-                    ? items.map(item => (
-                        <tr key={item.id}>
+                    ? items.map((item, index) => (
+                        <tr key={index}>
                             <td><Link href={`/topic/${item.id}`}><a>{item.title}</a></Link></td>
                             <td>
-                                <button onClick={() => editRow(item)}>
-                                    Edit
-                                </button>
-                                <button onClick={() => deleteItem(item.id)}>
-                                    Delete
-                                </button>
+                                <button onClick={() => editRow(item)}> Edit </button>
+                            </td>
+                            <td>
+                                <button onClick={(e) => deleteItem(item.id, e)}> Delete </button>
                             </td>
                         </tr>
                     ))
