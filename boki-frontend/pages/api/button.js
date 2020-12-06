@@ -1,16 +1,18 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 
 import {Card, getCardData, getDeckData} from "../../utils/alg";
-import axios from "axios";
-const SERVER_BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
+import axios from "axios"
 
+const SERVER_BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
 
 export default async (req, res) => {
     if (req.method === 'POST') {
         console.log("POST request detected", req.body)
-        const {button, cardID, deckID} = req.body
-        const deckData = await getDeckData(deckID)
+        const {button, cardID, deckID, visitTime} = req.body
+
         const cardData = await getCardData(cardID)
+        const deckData = cardData.deck
+
         const card = new Card(deckData, cardData)
         const prompt = card.prompt()
         let temp = prompt[`${button}_ivl`]
@@ -28,6 +30,7 @@ export default async (req, res) => {
         const countbyday = NextAppointmentTime >= 1440
         card.scheduleDueTime.push({"time": v.toJSON(), countbyday})
         card.statusHistory.push(card.status)
+        card.accessStartTime.push(visitTime)
         console.log("card chosen")
         const API = `${SERVER_BASE_URL}/cards/${cardID}`
         const {
@@ -36,12 +39,14 @@ export default async (req, res) => {
             ease_factor,
             interval,
             history,
+            accessStartTime,
             accessLeftTime,
             scheduleDueTime,
             statusHistory
         } = card
+
         const response = await axios.put(API, {
-            accessLeftTime, scheduleDueTime,
+            accessStartTime, accessLeftTime, scheduleDueTime,
             history, status, steps_index, ease_factor, interval,
             statusHistory
         })

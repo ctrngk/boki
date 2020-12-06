@@ -1,0 +1,12 @@
+{
+  "routes": [
+    {
+      "method": "POST",
+      "path": "/button",
+      "handler": "button.index",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

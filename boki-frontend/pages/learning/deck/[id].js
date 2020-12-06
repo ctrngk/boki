@@ -8,112 +8,36 @@ import CustomAudio from "../../../components/playSound"
 import {getStagedCard} from "../../../utils/cardUtils"
 import Error from "next/error";
 
-
 const SERVER_BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
 
 export async function getServerSideProps(context) {
 
     const deckID = Number(context.query.id)
-    const res = await fetch(`${SERVER_BASE_URL}/decks/${deckID}`)
-    const response = await res.json()
-    const {cards} = response
-    if (!cards) {
-        const e = new Error("no card yet")
-        e.code = 'ENOENT'
-        throw e
-    }
 
-    // **************alg part**********
-    // console.log("*********alg part started*********")
-    // {id: 1, accessLeftTime: [""], scheduleDueTime: [time: "", countbyday: false]}
-    // {id: 1, accessLeftTime: [""], scheduleDueTime: [time: "", countbyday: true]}
-    // {id: 1, accessLeftTime: [""], scheduleDueTime: [time: "", countbyday: false]}
-    // first Due Card
-    const readyCards = getStagedCard(cards)
-    // first New Card
-    const firstNewCard = cards.find(x => x.history === null)
+    const res = await axios.get(`${SERVER_BASE_URL}/decideNextCard/${deckID}`)
+    const card = res.data
+    return {props: {data: card}}
 
-    if (readyCards.length > 0) {
-        // console.log("visiting due card")
-        let firstDueCard = readyCards[0]
-        const deckData = await getDeckData(deckID)
-        const cardData = await getCardData(firstDueCard.id)
-        const card = new Card(deckData, cardData)
-        const prompt = await card.prompt()
-        // The difference between card vs firstDueCard?
-        // firstDueCard -> JSON
-        // card ->
-        if (card.accessStartTime.length === card.history.length) {
-            // set visit time stamp
-            card.accessStartTime.push(new Date().toJSON())
-            const API = `${SERVER_BASE_URL}/cards/${firstDueCard.id}`
-            const {accessStartTime} = card
-            const response = await axios.put(API, {accessStartTime})
-        } else if (card.accessStartTime.length === card.history.length + 1) {
-            // revisit: update the final visit time stamp
-            card.accessStartTime[card.accessStartTime.length - 1] = (new Date().toJSON())
-            const API = `${SERVER_BASE_URL}/cards/${firstNewCard.id}`
-            const {accessStartTime} = card
-            const response = await axios.put(API, {accessStartTime})
-
-        }
-        const data = {deckID, cardID: firstDueCard.id, stagedCard: firstDueCard, prompt}
-        return {props: {data}}
-    } else if (firstNewCard) {
-        // console.log(`visiting new card with ID ${firstNewCard.id}`)
-        const deckData = await getDeckData(deckID)
-        const cardData = await getCardData(firstNewCard.id)
-        const card = new Card(deckData, cardData)
-        const prompt = await card.prompt()
-        if (card.accessStartTime.length === card.history.length) {
-            // set visit time stamp
-            card.accessStartTime.push(new Date().toJSON())
-            const API = `${SERVER_BASE_URL}/cards/${firstNewCard.id}`
-            const {accessStartTime} = card
-            const response = await axios.put(API, {accessStartTime})
-        } else if (card.accessStartTime.length === card.history.length + 1) {
-            // revisit: update the final visit time stamp
-            card.accessStartTime[card.accessStartTime.length - 1] = (new Date().toJSON())
-            const API = `${SERVER_BASE_URL}/cards/${firstNewCard.id}`
-            const {accessStartTime} = card
-            const response = await axios.put(API, {accessStartTime})
-
-        }
-
-
-        const data = {deckID, cardID: firstNewCard.id, stagedCard: firstNewCard, prompt}
-        return {props: {data}}
-    } else {
-        // show overview
-        // show all due cards
-        // {id: 1, accessLeftTime: [""], scheduleDueTime: [time: "", countbyday: false]}
-        // {id: 1, accessLeftTime: [""], scheduleDueTime: [time: "", countbyday: true]}
-        // {id: 1, accessLeftTime: [""], scheduleDueTime: [time: "", countbyday: false]}
-        const dueCard = cards.map(x => {
-            let dueDate = new Date(x.scheduleDueTime[x.scheduleDueTime.length - 1].time)
-            let now = new Date()
-            let next_card_min_dif = Math.round(((dueDate - now) / 1000) / 60)
-            // return {id: x.id, due: next_card_min_dif + "mins" }
-            if (next_card_min_dif >= 1440)
-                return {id: x.id, due: (next_card_min_dif / 60 / 24).toFixed(2) + "days"}
-            else if (60 < next_card_min_dif && next_card_min_dif < 1440)
-                return {id: x.id, due: (next_card_min_dif / 60).toFixed(2) + "hours"}
-            else
-                return {id: x.id, due: next_card_min_dif + "mins"}
-        })
-        let data = {deckID, cardID: null, stagedCard: null, dueInfo: dueCard, prompt: null}
-        return {props: {data}} //show overview
-    }
 }
 
 const Page = ({data}) => {
     const [showBack, setShowBack] = useState(false)
 
-    const {cardID, deckID, stagedCard, prompt} = data
+    // const {cardID, deckID, stagedCard, prompt, visitTime} = data
+
+    const [card, setCard] = useState(data)
+
 
     const handleAnswer = async (button, cardID, deckID) => {
-        const res = await axios.post("/api/button", {button, cardID, deckID})
-        await window.location.reload(false)
+        console.log({button})
+        const res = await axios.post(`${SERVER_BASE_URL}/button`, {
+            button,
+            cardID,
+            deckID,
+            visitTime: card.visitTime
+        })
+        setCard(res.data)
+        setShowBack(false)
     }
 
     const tableData = React.useMemo(
@@ -133,24 +57,23 @@ const Page = ({data}) => {
 
     const columns = useMemo(
         () => [
-            { Header: 'id', accessor: 'id' },
-            { Header: 'due', accessor: 'due' },
+            {Header: 'id', accessor: 'id'},
+            {Header: 'due', accessor: 'due'},
         ]
     )
 
-    const [audioArray, setAudioArray] = useState(null)
-
-
     return (<>
         <Link href="/learning"><a>Learning Center</a></Link>
-        {stagedCard?.media.length > 0
-        && stagedCard?.media.some(x => { return x.mime?.split("/")[0] === "audio"})
-            && <CustomAudio audios={stagedCard?.media.map(x => {
+        {card.stagedCard?.media.length > 0
+        && card.stagedCard?.media.some(x => {
+            return x.mime?.split("/")[0] === "audio"
+        })
+        && <CustomAudio audios={card.stagedCard?.media.map(x => {
             return x.mime?.split("/")[0] === "audio" && `${SERVER_BASE_URL}${x.url}`
         })}/>}
-        {stagedCard &&
+        {card.stagedCard &&
         <>
-            <div className="content" dangerouslySetInnerHTML={{__html: stagedCard.front.html}}/>
+            <div className="content" dangerouslySetInnerHTML={{__html: card.stagedCard.front.html}}/>
 
             <button onClick={() => {
                 setShowBack(true)
@@ -163,28 +86,28 @@ const Page = ({data}) => {
 
             {showBack &&
             <>
-                <div className="content" dangerouslySetInnerHTML={{__html: stagedCard.back.html}}/>
-                <div className="content" dangerouslySetInnerHTML={{__html: stagedCard.description.html}}/>
+                <div className="content" dangerouslySetInnerHTML={{__html: card.stagedCard.back.html}}/>
+                <div className="content" dangerouslySetInnerHTML={{__html: card.stagedCard.description.html}}/>
             </>
             }
 
             <hr/>
-            {prompt.wrong_ivl && <>
-                <button onClick={() => handleAnswer("wrong", cardID, deckID)}>wrong</button>
-                {prompt.wrong_ivl}</>}
-            {prompt.hard_ivl && <>
-                <button onClick={() => handleAnswer("hard", cardID, deckID)}>hard</button>
-                {prompt.hard_ivl}</>}
-            {prompt.good_ivl && <>
-                <button onClick={() => handleAnswer("good", cardID, deckID)}>good</button>
-                {prompt.good_ivl}</>}
-            {prompt.easy_ivl && <>
-                <button onClick={() => handleAnswer("easy", cardID, deckID)}>easy</button>
-                {prompt.easy_ivl}</>}
+            {card.prompt.wrong_ivl && <>
+                <button onClick={() => handleAnswer("wrong", card.cardID, card.deckID)}>wrong</button>
+                {card.prompt.wrong_ivl}</>}
+            {card.prompt.hard_ivl && <>
+                <button onClick={() => handleAnswer("hard", card.cardID, card.deckID)}>hard</button>
+                {card.prompt.hard_ivl}</>}
+            {card.prompt.good_ivl && <>
+                <button onClick={() => handleAnswer("good", card.cardID, card.deckID)}>good</button>
+                {card.prompt.good_ivl}</>}
+            {card.prompt.easy_ivl && <>
+                <button onClick={() => handleAnswer("easy", card.cardID, card.deckID)}>easy</button>
+                {card.prompt.easy_ivl}</>}
 
         </>
         }
-        {data.dueInfo &&
+        {card.dueInfo &&
         <>
             <div>ALL FINISHED? No staged card yet</div>
             <ComplexTable columns={columns} data={tableData}/>
@@ -193,6 +116,11 @@ const Page = ({data}) => {
 
 
     </>)
+
+
+
+
+
 }
 
 export default Page

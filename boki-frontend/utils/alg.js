@@ -1,5 +1,13 @@
+import {ApolloClient, InMemoryCache} from "@apollo/client";
+import {gql} from '@apollo/client';
+
 const axios = require('axios')
 const SERVER_BASE_URL = process.env.NEXT_PUBLIC_SERVER_BASE_URL
+
+const client = new ApolloClient({
+    uri: `${SERVER_BASE_URL}/graphql`,
+    cache: new InMemoryCache()
+});
 
 const deckData_Default = {
     // "New cards" tab
@@ -21,9 +29,27 @@ const deckData_Default = {
 
 async function getDeckData(deckID) {
     if (deckID) {
-        const res = await axios.get(`${SERVER_BASE_URL}/decks/${deckID}`)
+        // const res = await axios.get(`${SERVER_BASE_URL}/decks/${deckID}`)
         // const res = await axios.get(`http://localhost:1337/decks/${deckID}`)
-        return res.data
+        // return res.data
+
+        const res = await client.query({
+            query: gql`query {
+                deck (id: ${Number(deckID)}) {
+                    NEW_STEPS
+                    GRADUATING_INTERVAL
+                    EASY_INTERVAL
+                    STARTING_EASE
+                    EASY_BONUS
+                    INTERVAL_MODIFIER
+                    MAXIMUM_INTERVAL
+                    NEW_INTERVAL
+                    MINIMUM_INTERVAL
+                    LAPSES_STEPS
+                }
+            }`
+        })
+        return res.data.deck
     } else {
         return deckData_Default
     }
@@ -171,7 +197,6 @@ const cardData_Default = {
 async function getCardData(cardID) {
     if (cardID) {
         const res = await axios.get(`${SERVER_BASE_URL}/cards/${cardID}`)
-        // const res = await axios.get(`http://localhost:1337/cards/${cardID}`)
         return res.data
     } else {
         return cardData_Default
